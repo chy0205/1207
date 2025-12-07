@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google 試算表單欄抽籤機</title>
+    <title>大班抽獎</title>
     <style>
       body {
         font-family: 'Inter', Arial, sans-serif;
@@ -185,8 +185,6 @@
     <!-- 隱藏的標題 -->
     <h1>1</h1>
     <h1>2</h1>
-    <h1>2</h1>
-    <h1>2</h1>
 
     <!-- 單一動態抽獎框 -->
     <div class="slot-machine-wrapper">
@@ -358,7 +356,7 @@
         }
 
         drawButton.disabled = true;
-        resultDiv.innerHTML = `正在抽取... (剩餘 ${undrawnItems.length} 個項目)`;
+        resultDiv.innerHTML = `正在抽取... `;
         singleReel.innerHTML = '抽取中...';
         
         // 1. 確定最終的抽取結果
@@ -411,7 +409,7 @@
             `;
             historyDiv.scrollTop = historyDiv.scrollHeight;
 
-            resultDiv.innerHTML = `🎉 恭喜！抽出：<b>${finalItem}</b> <span>(剩餘 ${undrawnItems.length} 個項目未抽取)</span>`;
+            resultDiv.innerHTML = `🎉 恭喜！抽出：<b>${finalItem}`;
             
             singleReel.classList.remove('spinning');
             
@@ -457,3 +455,4 @@
     </script>
   </body>
 </html>
+
