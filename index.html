@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 試算表單欄抽籤機</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-image: url('003.png'); /* 確保圖片檔案 '003.png' 在同一個資料夾 */
+        font-family: 'Inter', Arial, sans-serif;
+        background-image: url('https://chy0205.github.io/1207/003.png'); /* 背景圖片 URL */
         background-size: cover;
         background-position: top center;
         background-attachment: fixed;
         background-repeat: no-repeat;
         text-align: center;
-        padding: 50px;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
       }
+      
       /* 將音頻播放器隱藏 */
       #spinSound, #finishSound {
         display: none; 
@@ -23,183 +30,210 @@
         color: rgba(0, 0, 0, 0); 
       }
 
+      /* 單一轉盤容器，更加突出 */
       .slot-machine-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
         margin-top: 40px;
-        gap: 0px; 
+        flex-direction: column; 
       }
-
-      .reel-box {
-        width: 250px;
-        height: 80px;
-        border-radius: 10px;
-        font-size: 50px; 
-        font-weight: bold;
+      
+      .single-reel-box {
+        width: 90vw; /* 寬度響應式 */
+        max-width: 400px; /* 最大寬度已縮小 */
+        height: 80px; /* 高度已縮小 */
+        border-radius: 20px;
+        font-size: 28px; /* 字體大小已縮小 */
+        font-weight: 900; /* 超級加粗 */
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        color: #333; 
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-        padding: 0 10px; 
+        color: #FFFFFF; /* <<<<<< 變更：預設文字顏色改為白色 */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* 更深的陰影 */
+        background-color: transparent; /* <<<<<< 變更：背景顏色改為透明 */
+        padding: 0 20px; /* 調整內邊距 */
         box-sizing: border-box; 
+        border: none; /* <<<<<< 變更：移除邊框 */
+        overflow: hidden; 
+        transition: box-shadow 0.3s ease, font-size 0.3s ease;
+      }
+      
+      .single-reel-box.spinning {
+        color: #FFFF00; /* 轉動時文字顏色變化為亮黃色 */
+        box-shadow: 0 0 40px rgba(255, 255, 0, 0.9); /* 轉動時發出黃色光暈 */
+      }
+      
+      .final-result-text {
+          font-size: 40px; /* 最終結果字體已縮小 */
+          color: #d9534f; /* 醒目紅色 (保持不變) */
+          font-weight: bold;
       }
 
-      /* #areaReel 和 #numberReel 的特定對齊已在之前的版本中調整，
-         並在 JavaScript 中控制其內容顯示。 */
+      /* 按鈕容器 */
+      .button-group {
+          margin-top: 30px;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 15px;
+      }
 
       button {
-        margin: 10px;
         padding: 15px 30px;
         font-size: 16px;
         font-weight: bold;
-        background-color: #ff9900;
         color: white;
         border: none;
-        border-radius: 10px;
+        border-radius: 8px; 
         cursor: pointer;
-        transition: background-color 0.3s ease; 
+        transition: all 0.3s ease; 
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-transform: uppercase;
       }
 
-      button:hover {
+      #drawButton {
+        background-color: #ff9900;
+        box-shadow: 0 4px #e68a00;
+        min-width: 150px;
+      }
+      #drawButton:hover {
         background-color: #e68a00;
+        transform: translateY(-2px);
+      }
+      #drawButton:active {
+        box-shadow: 0 2px #e68a00;
+        transform: translateY(2px);
+      }
+
+      #restartButton {
+        background-color: #008080; 
+        box-shadow: 0 4px #006666;
+        min-width: 150px;
+      }
+      #restartButton:hover {
+        background-color: #006666;
+        transform: translateY(-2px);
       }
 
       button:disabled {
         background-color: #cccccc;
         cursor: not-allowed;
-      }
-
-      #resetHistoryButton {
-        background-color: #666;
-      }
-      #resetHistoryButton:hover {
-        background-color: #555;
-      }
-
-      #restartButton {
-        background-color: #0066cc;
-      }
-      #restartButton:hover {
-        background-color: #005bb5;
+        box-shadow: none;
+        transform: none;
       }
 
       #result {
         margin-top: 30px;
-        font-size: 18px;
-        color: #333;
+        font-size: 20px; 
+        color: #003366; 
         font-weight: bold; 
+        min-height: 30px; 
       }
 
       #result b {
-        color: #003366;
+        color: #d9534f;
+      }
+      #result span {
+        font-size: 16px;
+        color: #555;
+        display: block;
+        margin-top: 5px;
       }
 
       #history {
         margin-top: 40px;
         text-align: left;
         max-width: 400px;
+        width: 90%;
         margin-left: auto;
         margin-right: auto;
-        background: rgba(255, 255, 255, 0.9); 
+        background: rgba(255, 255, 255, 0.95); /* 保持白色背景讓紀錄可讀 */
         padding: 15px;
         border-radius: 10px;
-        border: 1px solid #ccc;
+        border: none; /* <<<<<< 變更：移除邊框 */
         min-height: 100px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); 
         overflow-y: auto; 
         max-height: 250px; 
+        color: #333;
+        font-size: 16px;
       }
 
       #history div {
         margin-bottom: 5px;
+        border-bottom: 1px dotted #eee; 
+        padding-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
       }
+      #history div:last-child {
+        border-bottom: none;
+      }
+      
+      .history-title {
+          font-size: 18px;
+          margin-bottom: 10px;
+          display: block;
+          font-weight: bold;
+          color: #003366;
+      }
+      
     </style>
   </head>
   <body>
+    <!-- 隱藏的標題 -->
     <h1>1</h1>
     <h1>2</h1>
     <h1>2</h1>
     <h1>2</h1>
 
+    <!-- 單一動態抽獎框 -->
     <div class="slot-machine-wrapper">
-      <div id="areaReel" class="reel-box">--</div>
-      <div id="numberReel" class="reel-box">--</div>
+      <div id="singleReel" class="single-reel-box">-- 載入中 --</div>
     </div>
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
+    
+    <!-- 佔位符 -->
+    <div style="height: 20px;"></div> 
 
-    <audio id="spinSound" src="002.mp3" preload="auto"></audio>
-    <audio id="finishSound" src="002.mp3" preload="auto"></audio>
+    <!-- 實際音訊檔案 URL -->
+    <audio id="spinSound" src="https://chy0205.github.io/1207/002.mp3" preload="auto" loop></audio> 
+    <audio id="finishSound" src="https://chy0205.github.io/1207/002.mp3" preload="auto"></audio>
+    
+    <!-- 按鈕群組 -->
+    <div class="button-group">
+        <button id="drawButton" onclick="startDraw()" disabled>載入數據中...</button>
+        <button id="restartButton" onclick="restartAll()">🔄 重新開始 (重置名單)</button>
+    </div>
 
-    <button id="drawButton" onclick="startDraw()">開始抽選</button>
-    <button id="retryNumberButton" onclick="retryNumber()" disabled>重抽目前編號</button>
-    <button id="resetHistoryButton" onclick="resetHistory()">清除紀錄</button>
-    <button id="restartButton" onclick="restartAll()">🔄 重新開始</button>
-
-    <div id="result"></div>
-    <div id="history"><strong>🎯 抽選紀錄：</strong></div>
+    <div id="result">請稍候，正在從 Google 試算表載入數據...</div>
+    <div id="history"><strong class="history-title">🎯 已抽取名單：</strong></div>
 
     <script>
-      // A 名單：動畫用籤桶名稱與區域 (僅用於區域轉盤的動畫顯示)
-      const areaListA = ["正宗", "大德", "華德", "中和", "文化傳播", "崇正", "通化", "賢德", "國際", "精明", "馬來明恩", "印尼和善", "柬國天揚", "美國天真", "澳洲", "泰國", "越南",];
-      // areaMapA 在此情境下將不再用於實際的抽取邏輯，僅供參考或未來擴充
-      const areaMapA = {
-        "正宗": ["001區", "002區", "003區", "004區", "005區", "006區", "007區", "008區"],
-        "大德": ["001區", "002區", "003區"],
-        "華德": ["001區", "002區", "003區", "004區", "005區", "006區"],
-        "中和": [
-          "001區", "002區", "003區", "004區", "005區", "006區", "007區", "008區", "010區", "011區", "012區", "013區", "014區", "015區", "017區", "018區", "019區", "020區", "021區", "022區", "023區", "024區", "025區", "026區", "027區", "028區", "029區", "030區", "031區", "032區", "033區", "034區", "035區", "037區", "039區", "040區", "041區", "042區", "044區", "045區", "046區", "047區", "048區", "049區", "050區", "051區", "052區", "053區", "055區", "056區", "058區", "061區", "062區", "063區", "064區", "065區", "066區", "072區", "073區", "075區", "077區", "078區", "079區", "080區", "081區", "085區", "086區", "087區", "088區", "089區", "091區", "092區", "093區","097區", "098區", "099區", "101區", "103區", "107區", "110區", "114區", "115區", "118區", "119區" 
-        ],
-        "文化傳播": ["001區"],
-        "崇正": ["區"],
-        "通化": ["001區", "002區", "003區", "004區", "005區", "006區"],
-        "賢德": ["001區", "002區", "003區"],
-        "國際": ["001區"],
-      };
-      
-      // B 名單：真實抽出區名及區號 (實際抽獎的數據來源)
-      let areaNames = [
-        "中和", "崇正", "賢德",
-      ];
-      let areaMap = {
-        "中和": [
-          "001區", "002區", "003區", "004區", "005區", "006區", "007區", "008區", "010區", "011區", "012區", "013區", "014區", "015區", "017區", "018區", "019區", "020區", "021區", "022區", "023區", "024區", "025區", "026區", "027區", "028區", "029區", "030區", "031區", "032區", "033區", "034區", "035區", "037區", "039區", "040區", "041區", "042區", "044區", "045區", "046區", "047區", "048區", "049區", "050區", "051區", "052區", "053區", "055區", "056區", "058區", "061區", "062區", "063區", "064區", "065區", "066區", "072區", "073區", "075區", "077區", "078區", "079區", "080區", "081區", "085區", "086區", "087區", "088區", "089區", "091區", "092區", "093區","097區", "098區", "099區", "101區", "103區", "107區", "110區", "114區", "115區", "118區", "119區" 
-        ],
-        "崇正": ["區"],
-        "賢德": ["001區"],
-      };
+      // =======================================================
+      // !! 數據源：使用提供的公開發布連結，轉換為 CSV 匯出連結。
+      const PUBLIC_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQoBcigWHcMcS68OCWVgKkpd0w5TtQk1yqBP5qieowGCtvyfYHiBPSX_yfivLU4nOdCyyAbGa5cDht8/pub?output=csv&gid=0"; 
+      // =======================================================
 
-      // 將 areaMap (B 名單) 裡的每個編號列表進行排序 (可選，但讓抽選更有序)
-      for (const area in areaMap) {
-        areaMap[area].sort();
-      }
-      // ===================================
+      let initialItems = []; // 從試算表載入的原始項目列表
+      let undrawnItems = []; // 尚未被抽取的項目列表
+      let drawnHistory = []; // 抽取紀錄
 
-      let drawnMap = {}; // 用於記錄已抽出的編號
-      let lastSelectedArea = null; // 記錄上次抽中的區域
-
-      // 獲取轉動音頻元素 (確保 src="002.mp3" 路徑正確)
+      // 獲取元素
       const spinSound = document.getElementById('spinSound'); 
-      // 獲取結束音頻元素 (確保 src="002.mp3" 路徑正確)
       const finishSound = document.getElementById('finishSound'); 
-
-      window.onload = () => {
-        // 頁面載入時的初始化操作，目前無需特殊處理
-      };
+      const singleReel = document.getElementById('singleReel');
+      const drawButton = document.getElementById('drawButton');
+      const resultDiv = document.getElementById('result');
+      const historyDiv = document.getElementById('history');
 
       /**
        * 播放轉動音效。
        */
       function playSpinSound() {
         if (spinSound) {
-          spinSound.currentTime = 0; // 每次播放前重置到開頭
-          spinSound.play().catch(e => console.log("轉動音頻播放失敗:", e)); // 捕獲並印出錯誤
+          spinSound.currentTime = 0; 
+          spinSound.play().catch(e => console.log("轉動音頻播放失敗:", e));
         }
       }
 
@@ -208,256 +242,218 @@
        */
       function stopSpinSound() {
         if (spinSound) {
-          spinSound.pause(); // 暫停播放
-          spinSound.currentTime = 0; // 重置到開頭
+          spinSound.pause(); 
+          spinSound.currentTime = 0; 
         }
       }
 
       /**
        * 播放結束音效的特定區段。
-       * @param {number} startTime - 音效開始播放的秒數。
-       * @param {number} duration - 音效持續播放的秒數。
        */
       function playFinishSound(startTime, duration) {
         if (finishSound) {
-          finishSound.currentTime = startTime; // 設定播放起點 (秒)
-          finishSound.play().catch(e => console.log("結束音頻播放失敗:", e)); // 捕獲並印出錯誤
+          finishSound.currentTime = startTime; 
+          finishSound.play().catch(e => console.log("結束音頻播放失敗:", e)); 
 
-          // 設定在指定秒數後停止
           setTimeout(() => {
             finishSound.pause();
-            finishSound.currentTime = 0; // 重置到開頭
-          }, duration * 1000); // duration 是秒數，所以要乘以 1000 轉換為毫秒
+            finishSound.currentTime = 0; 
+          }, duration * 1000); 
         }
+      }
+      
+      /**
+       * 載入並解析 Google Sheets 的 CSV 資料，只讀取第一欄。
+       */
+      async function loadDataFromSheet() {
+        try {
+          const url = PUBLIC_CSV_URL.replace(/^http:\/\//i, 'https://');
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
+          }
+          const csvText = await response.text();
+          
+          // 解析 CSV
+          const rows = csvText.split('\n').filter(row => row.trim() !== '');
+          
+          if (rows.length < 2) {
+            resultDiv.innerHTML = '🚨 警告：試算表可能為空或只有標題行。';
+            drawButton.disabled = true;
+            singleReel.innerText = '無數據';
+            return;
+          }
+          
+          // 處理數據行 (假設第一行是標題，數據從第二行開始)
+          // 只讀取第一欄 (Column A) 作為抽取項目
+          
+          initialItems = []; // 清空舊數據
+          
+          for (let i = 1; i < rows.length; i++) {
+            // 使用正則表達式來處理可能的逗號和引號
+            const columns = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,\s*|\s*$)/g) || [];
+            
+            // 確保有第一欄
+            if (columns.length === 0) continue; 
+
+            // 移除引號並清理空格，作為抽取項目
+            const item = columns[0].trim().replace(/"/g, '');
+
+            if (item) {
+              initialItems.push(item);
+            }
+          }
+          
+          // 移除重複項並排序 (可選，但保持數據清晰)
+          initialItems = Array.from(new Set(initialItems)).sort();
+          undrawnItems = [...initialItems]; // 初始化未抽取列表
+
+          if (initialItems.length === 0) {
+             resultDiv.innerHTML = '🚨 錯誤：試算表中找不到有效的抽獎數據！請檢查 Column A 是否有資料。';
+             singleReel.innerText = '無數據';
+             drawButton.disabled = true;
+             return;
+          }
+
+          // 載入成功
+          drawButton.disabled = false;
+          drawButton.innerText = '開始抽選';
+          resultDiv.innerHTML = `✅ 數據載入成功！共有 <b>${initialItems.length}</b> 個項目可供抽取。`;
+          singleReel.innerText = '-- / --';
+
+        } catch (error) {
+          console.error("載入試算表數據失敗:", error);
+          resultDiv.innerHTML = `🚨 數據載入失敗！請檢查您的公開網址是否正確。錯誤: ${error.message}`;
+          singleReel.innerText = '載入失敗';
+          drawButton.disabled = true;
+        }
+      }
+      
+      /**
+       * 根據當前 undrawnItems 列表，生成一個用於動畫顯示的滾動清單。
+       */
+      function getSpinDisplayList(currentPool) {
+          let displayList = [];
+          
+          if (currentPool.length === 0) return ["--"];
+
+          // 滾動清單包含所有未抽取的項目，重複多次以延長動畫效果
+          for (let i = 0; i < 50; i++) { 
+              const index = Math.floor(Math.random() * currentPool.length);
+              displayList.push(currentPool[index]);
+          }
+          return displayList;
       }
 
       /**
-       * 開始抽選流程。
+       * 開始抽選流程 (單一項目)。
        */
       function startDraw() {
-        document.getElementById('drawButton').disabled = true;
-        document.getElementById('retryNumberButton').disabled = true;
-        document.getElementById('result').innerHTML = '';
-        document.getElementById('areaReel').innerText = '--';
-        document.getElementById('numberReel').innerText = '--';
+        if (undrawnItems.length === 0) {
+          resultDiv.innerHTML = '🚨 所有項目都抽完了，請按「重新開始」按鈕！';
+          drawButton.disabled = true;
+          singleReel.classList.remove('spinning');
+          stopSpinSound();
+          return;
+        }
+
+        drawButton.disabled = true;
+        resultDiv.innerHTML = `正在抽取... (剩餘 ${undrawnItems.length} 個項目)`;
+        singleReel.innerHTML = '抽取中...';
         
-        playSpinSound(); // 開始播放轉動音效
-        spinAreaFirst();
-      }
-
-      /**
-       * 轉動區域輪盤。
-       */
-      function spinAreaFirst() {
-        // 從 areaNames (B 名單) 中篩選出還有未抽出編號的真實區域，用於實際抽取
-        const availableRealAreas = areaNames.filter(area => {
-          const areaNumbers = areaMap[area]; // 使用 areaMap (B 名單)
-          if (!areaNumbers || areaNumbers.length === 0) {
-            return false; // 如果這個區域在 B 名單中沒有對應的編號陣列，或陣列是空的，則不參與抽選
-          }
-
-          // 特殊處理 "崇正" 這種只有一個 "區" 的情況
-          if (areaNumbers.length === 1 && areaNumbers[0] === '區') {
-            // 如果該區域的「區」已被抽出，則不參與抽選
-            return !drawnMap[area] || !drawnMap[area].includes('區'); 
-          }
-
-          // 對於有實際數字編號的區域
-          if (!drawnMap[area]) return true; // 如果該區域還沒有被抽過任何編號，則可用
-          return drawnMap[area].length < areaNumbers.length; // 如果該區域還有未抽出的編號，則可用
-        });
-
-        // 如果所有真實區域的編號都已抽完
-        if (availableRealAreas.length === 0) {
-          alert("所有真實區域的編號都抽完了，請按「重新開始」重新抽選！");
-          document.getElementById('drawButton').disabled = false;
-          stopSpinSound(); // 停止轉動音效
-          return;
-        }
-
-        const areaReel = document.getElementById('areaReel');
-        let spinDuration = 2000 + Math.random() * 1000; // 隨機轉動時間 (2秒到3秒)
-        let start = null; // 動畫開始時間
-
-        function animate(time) {
-          if (!start) start = time;
-          const progress = time - start;
-          // 動畫顯示使用 areaListA (A 名單) 中的名稱，用於籤桶視覺效果
-          const i = Math.floor(progress / 80) % areaListA.length; 
-          areaReel.innerText = areaListA[i];
-
-          if (progress < spinDuration) {
-            requestAnimationFrame(animate); // 繼續動畫
-          } else {
-            // 動畫結束，從 availableRealAreas (B 名單中篩選出的) 中選取最終區域
-            const finalArea = availableRealAreas[Math.floor(Math.random() * availableRealAreas.length)];
-            areaReel.innerText = finalArea;
-            lastSelectedArea = finalArea; // 記錄最終選中的區域
-
-            stopSpinSound(); // 停止轉動音效
-
-            spinNumber(finalArea); // 接著轉動編號
-          }
-        }
-
-        requestAnimationFrame(animate); // 啟動動畫
-      }
-
-      /**
-       * 轉動編號輪盤。
-       * @param {string} area - 當前選中的區域名稱 (此處的 area 必然來自 B 名單)。
-       */
-      function spinNumber(area) {
-        // 使用 areaMap (B 名單) 中的編號資料來獲取該區域的編號列表
-        const allNumbersWithSuffix = areaMap[area]; 
-        const numberReel = document.getElementById('numberReel');
-
-        // 特殊處理：如果該區域沒有任何實際數字編號可供抽選 (例如"崇正"只有「區」字)
-        if (!allNumbersWithSuffix || allNumbersWithSuffix.length === 0 || (allNumbersWithSuffix.length === 1 && allNumbersWithSuffix[0] === '區')) {
-          const displayValue = (allNumbersWithSuffix && allNumbersWithSuffix[0] === '區') ? '區' : '--'; // 針對「崇正區」顯示「區」字
-          numberReel.innerText = displayValue; // 顯示「區」字
-
-          // 將這個單一單位標記為已抽取，這樣下次就不會再抽到
-          if (!drawnMap[area]) drawnMap[area] = [];
-          if (!drawnMap[area].includes('區')) { // 確保只添加一次
-            drawnMap[area].push('區');
-          }
-
-          document.getElementById('history').innerHTML += `
-            <div>🔹 <b>${area}</b> (區)</div> `;
-          const historyDiv = document.getElementById('history');
-          historyDiv.scrollTop = historyDiv.scrollHeight;
-
-          document.getElementById('drawButton').disabled = false;
-          document.getElementById('retryNumberButton').disabled = true; // 單一單位無法重抽
-          stopSpinSound(); // 停止轉動音效
-          return;
-        }
-
-        if (!drawnMap[area]) drawnMap[area] = []; // 如果該區域還沒有記錄，則初始化為空陣列
-
-        // 過濾出該區域中還未被抽出的編號 (帶有「區」字)，確保只從 B 名單的編號中抽取
-        const remainingNumbersWithSuffix = allNumbersWithSuffix.filter(n => !drawnMap[area].includes(n));
-
-        // 如果該區域的所有編號都抽完了
-        if (remainingNumbersWithSuffix.length === 0) {
-          numberReel.innerText = '已抽完';
-          // 這裡的提示語表示該區域已抽完，而不是所有區域
-          document.getElementById('result').innerHTML = `⚠️ <b>${area}</b> 的編號已全部抽完，此區域將不再參與抽選。`;
-          document.getElementById('drawButton').disabled = false;
-          document.getElementById('retryNumberButton').disabled = true; // 該區域已抽完，無法重抽
-          stopSpinSound(); // 停止轉動音效
-          return;
-        }
-
-        playSpinSound(); // 編號轉動時的音效
-        let spinDuration = 2000 + Math.random() * 1000; // 隨機轉動時間 (2秒到3秒)
-        let start = null; // 動畫開始時間
-
-        function animate(time) {
-          if (!start) start = time;
-          const progress = time - start;
-          const i = Math.floor(progress / 80) % remainingNumbersWithSuffix.length; // 每80毫秒更換一次顯示的編號
-          numberReel.innerText = remainingNumbersWithSuffix[i]; // 顯示時保留「區」字
-
-          if (progress < spinDuration) {
-            requestAnimationFrame(animate); // 繼續動畫
-          } else {
-            // 動畫結束，選取最終編號 (帶有「區」字)
-            const finalNumberWithSuffix = remainingNumbersWithSuffix[Math.floor(Math.random() * remainingNumbersWithSuffix.length)];
-            
-            numberReel.innerText = finalNumberWithSuffix; // 顯示時保留「區」字
-            drawnMap[area].push(finalNumberWithSuffix); // 將抽出的編號（帶有「區」字）加入記錄
-
-            // 在歷史記錄中顯示
-            document.getElementById('history').innerHTML += `
-              <div>🔹 <b>${area}</b> <b>${finalNumberWithSuffix}</b></div>
-            `;
-            // 使歷史記錄滾動到底部
-            const historyDiv = document.getElementById('history');
-            historyDiv.scrollTop = historyDiv.scrollHeight;
-
-            document.getElementById('drawButton').disabled = false; // 啟用開始抽選按鈕
-            document.getElementById('retryNumberButton').disabled = false; // 啟用重抽按鈕
-            stopSpinSound(); // 停止轉動音效
-
-            // 播放結束音效。您可以調整這兩個參數：
-            // 第一個參數：音效開始播放的秒數 (例如 9 代表從 finish.mp3 的第 9 秒開始)
-            // 第二個參數：音效持續播放的秒數 (例如 2 代表播放 2 秒)
-            playFinishSound(9, 2); 
-          }
-        }
-
-        requestAnimationFrame(animate); // 啟動動畫
-      }
-
-      /**
-       * 重抽目前編號。
-       */
-      function retryNumber() {
-        if (!lastSelectedArea) {
-          alert("請先抽出一個區域！");
-          return;
-        }
-        // 如果 lastSelectedArea 是沒有數字編號的單一單位，則不能重抽 (使用 areaMapB)
-        const areaNumbers = areaMap[lastSelectedArea];
-        if (!areaNumbers || areaNumbers.length === 0 || (areaNumbers.length === 1 && areaNumbers[0] === '區')) {
-            alert("此單位沒有編號可供重抽。");
-            return;
-        }
-
-        document.getElementById('result').innerHTML = '';
-        document.getElementById('numberReel').innerText = '--';
-        document.getElementById('drawButton').disabled = true;
-        document.getElementById('retryNumberButton').disabled = true;
-
-        // 在重抽之前，將上次抽出的編號從 drawnMap 中移除，使其可以再次被選中
-        if (drawnMap[lastSelectedArea] && drawnMap[lastSelectedArea].length > 0) {
-            const lastDrawn = drawnMap[lastSelectedArea].pop(); // 移除最後一個元素（包含「區」字尾的編號）
-            console.log(`重抽：將 ${lastSelectedArea} 的 ${lastDrawn} 從已抽記錄中移除。`); // 方便除錯
-
-            // 同步移除歷史記錄中的最後一個項目
-            const historyDiv = document.getElementById('history');
-            if (historyDiv.lastElementChild && historyDiv.lastElementChild.tagName === 'DIV') {
-                historyDiv.removeChild(historyDiv.lastElementChild);
-            }
-        }
-        // 重抽時，確保停止結束音效，避免多個音效疊加
+        // 1. 確定最終的抽取結果
+        const finalItemIndex = Math.floor(Math.random() * undrawnItems.length);
+        const finalItem = undrawnItems[finalItemIndex];
+        
+        // 2. 開始音效與動畫
+        stopSpinSound();
         if (finishSound) {
           finishSound.pause();
           finishSound.currentTime = 0;
         }
-        spinNumber(lastSelectedArea); // 重新轉動編號
-      }
+        playSpinSound(); 
+        singleReel.classList.add('spinning');
+        
+        let spinDuration = 3000 + Math.random() * 1500; 
+        let start = null; 
+        
+        const displayList = getSpinDisplayList(undrawnItems);
+        const len = displayList.length;
 
-      /**
-       * 清除歷史紀錄。
-       */
-      function resetHistory() {
-        document.getElementById('history').innerHTML = '<strong>🎯 抽選紀錄：</strong>';
+        function animate(time) {
+          if (!start) start = time;
+          const progress = time - start;
+          
+          if (len > 0) {
+              // 控制滾動速度
+              const i = Math.floor(progress / 70) % len; 
+              singleReel.innerHTML = displayList[i];
+          }
+
+          if (progress < spinDuration) {
+            requestAnimationFrame(animate); 
+          } else {
+            // 3. 動畫結束，顯示最終結果
+            
+            // 從未抽取列表中移除
+            undrawnItems.splice(finalItemIndex, 1);
+            
+            // 加入歷史紀錄
+            drawnHistory.push(finalItem);
+            
+            const finalDisplay = `<span class="final-result-text">${finalItem}</span>`;
+            singleReel.innerHTML = finalDisplay; 
+
+            // 在歷史記錄中顯示
+            const drawnCount = drawnHistory.length;
+            historyDiv.innerHTML += `
+              <div><span>${drawnCount}.</span> <span><b>${finalItem}</b></span></div>
+            `;
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+
+            resultDiv.innerHTML = `🎉 恭喜！抽出：<b>${finalItem}</b> <span>(剩餘 ${undrawnItems.length} 個項目未抽取)</span>`;
+            
+            singleReel.classList.remove('spinning');
+            
+            // 檢查是否已抽完
+            if (undrawnItems.length > 0) {
+                drawButton.disabled = false; 
+            } else {
+                drawButton.disabled = true;
+                resultDiv.innerHTML = `🎉 恭喜！所有 <b>${drawnCount}</b> 個項目已全部抽取完畢！`;
+            }
+
+            stopSpinSound(); 
+            playFinishSound(9, 2); 
+          }
+        }
+
+        requestAnimationFrame(animate); 
       }
 
       /**
        * 重置所有抽獎資料，重新開始。
        */
       function restartAll() {
-        drawnMap = {}; // 清空所有已抽出的記錄
-        lastSelectedArea = null; // 清空上次選中的區域
-        document.getElementById('areaReel').innerText = '--';
-        document.getElementById('numberReel').innerText = '--';
-        document.getElementById('result').innerHTML = ''; // 確保重新開始時也清空
-        document.getElementById('history').innerHTML = '<strong>🎯 抽選紀錄：</strong>';
-        document.getElementById('drawButton').disabled = false; // 啟用開始抽選按鈕
-        document.getElementById('retryNumberButton').disabled = true; // 禁用重抽按鈕
-        alert("所有資料已重置，重新開始抽選！");
-
-        // 重新開始時，停止所有音效
+        undrawnItems = [...initialItems]; // 恢復未抽取列表
+        drawnHistory = []; 
+        singleReel.innerHTML = '-- / --';
+        resultDiv.innerHTML = `所有資料已重置！共有 <b>${initialItems.length}</b> 個項目。請重新開始抽選！`;
+        historyDiv.innerHTML = '<strong class="history-title">🎯 已抽取名單：</strong>';
+        drawButton.disabled = initialItems.length === 0;
+        drawButton.innerText = '開始抽選';
+        
         stopSpinSound();
         if (finishSound) {
           finishSound.pause();
           finishSound.currentTime = 0;
         }
+        
+        singleReel.classList.remove('spinning');
       }
+
+      // 網頁載入時自動執行
+      window.onload = loadDataFromSheet;
     </script>
   </body>
 </html>
