@@ -41,10 +41,10 @@
       
       .single-reel-box {
         width: 90vw; /* 寬度響應式 */
-        max-width: 400px; /* 最大寬度已縮小 */
-        height: 80px; /* 高度已縮小 */
+        max-width: 500px; /* 最大寬度已縮小 */
+        height: 100px; /* 高度已縮小 */
         border-radius: 20px;
-        font-size: 60px; /* 字體大小已縮小 */
+        font-size: 80px; /* 字體大小已縮小 */
         font-weight: 900; /* 超級加粗 */
         display: flex; 
         align-items: center; 
@@ -196,7 +196,7 @@
     <!-- 按鈕群組 -->
     <div class="button-group">
         <button id="drawButton" onclick="startDraw()" disabled>載入數據中...</button>
-        <button id="restartButton" onclick="restartAll()">🔄 重新開始 (重置名單)</button>
+        <button id="restartButton" onclick="restartAll()">🔄 重新開始</button>
     </div>
 
     <div id="result">請稍候，正在從 Google 試算表載入數據...</div>
@@ -311,7 +311,7 @@
           // 載入成功
           drawButton.disabled = false;
           drawButton.innerText = '開始抽選';
-          resultDiv.innerHTML = `✅ 數據載入成功！共有 <b>${initialItems.length}</b> 個項目可供抽取。`;
+          resultDiv.innerHTML = `✅ 數據載入成功！`;
           singleReel.innerText = '-- / --';
 
         } catch (error) {
@@ -450,4 +450,5 @@
     </script>
   </body>
 </html>
+
 
